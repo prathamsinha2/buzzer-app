@@ -1,235 +1,139 @@
-# Buzzer - iPhone PWA Device Finder
+# Buzzer - Web Push Device Finder
 
-A Progressive Web App for iPhone that enables users to remotely ring devices in their group with customizable durations.
+A Progressive Web App (PWA) that enables users to remotely "buzz" devices in their group using Web Push Notifications. Works on iOS, Android, and Desktop.
 
 ## Features
 
-- ✅ Installable on iPhone Home Screen
-- ✅ User accounts with group management
-- ✅ Real-time device status tracking (online/offline)
-- ✅ Remote device ringing with custom durations (30s, 1min, 2min, continuous)
-- ✅ Works on lock screen (app must be open)
-- ✅ Offline support for cached assets
+- ✅ **Cross-Platform PWA:** Installable on iOS (Add to Home Screen), Android, and Desktop.
+- ✅ **Web Push Notifications:** Uses standard Web Push API (VAPID) to deliver notifications even when the app is closed (on supported platforms).
+- ✅ **Real-Time Status:** See which devices are Online/Offline via WebSockets.
+- ✅ **Group Management:** Create groups, join via invite codes, and manage members.
+- ✅ **"Find My Device":** Buzz your own devices from the dashboard.
+- ✅ **Offline Support:** Service Worker caches assets for offline access.
 
-## Important: iOS Limitations
+## Tech Stack
 
-**For a device to ring, the Buzzer app must remain open on that device** (can be on lock screen, but cannot be swiped away). This is an iOS PWA limitation. The device will ring even with the screen locked, but the app must be running.
+- **Backend:** FastAPI (Python), SQLAlchemy, PyWebPush, SQLite (Dev) / PostgreSQL (Prod).
+- **Frontend:** Vanilla JavaScript, HTML5, CSS3.
+- **Real-time:** WebSockets for status updates.
+- **Notifications:** Web Push API + Service Workers.
 
 ## Quick Start
 
 ### Prerequisites
 - Python 3.11+
-- PostgreSQL
-- Node.js (for development tools, optional)
-- iOS device (for testing)
+- Node.js (optional, for dev tools)
 
-### Backend Setup
+### Local Development
 
-1. **Create virtual environment:**
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/Scripts/activate  # Windows: venv\Scripts\activate
-   ```
+1.  **Clone the repo:**
+    ```bash
+    git clone <your-repo-url>
+    cd buzzer_app
+    ```
 
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+2.  **Backend Setup:**
+    ```bash
+    cd backend
+    python -m venv venv
+    # Windows
+    venv\Scripts\activate
+    # Mac/Linux
+    source venv/bin/activate
+    
+    pip install -r requirements.txt
+    ```
 
-3. **Setup environment:**
-   ```bash
-   cp ../.env.example .env
-   # Edit .env with your database URL and SECRET_KEY
-   ```
+3.  **Database Migration:**
+    ```bash
+    # This will create the local SQLite database
+    alembic upgrade head
+    ```
 
-4. **Initialize database:**
-   ```bash
-   alembic upgrade head
-   ```
+4.  **Generate VAPID Keys:**
+    The app uses VAPID keys for push notifications. You can generate them using:
+    ```bash
+    # Inside backend/ directory
+    python -c "from pywebpush import WebPusher; print(WebPusher(private_key='').generate_vapid_keys())"
+    ```
+    Save the output to `backend/vapid.json`:
+    ```json
+    {
+        "private_key": "YOUR_PRIVATE_KEY",
+        "public_key": "YOUR_PUBLIC_KEY",
+        "email": "mailto:admin@example.com"
+    }
+    ```
 
-5. **Run development server:**
-   ```bash
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
+5.  **Run Server:**
+    ```bash
+    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    ```
 
-### Frontend Setup
+6.  **Access App:**
+    Open `http://localhost:8000` in your browser.
 
-The frontend is served by the backend. Just make sure icon files and ringtone are added:
+## Deployment (Render.com)
 
-1. **Add app icons:** Copy PNG files to `frontend/static/icons/` (72x72 to 512x512)
-2. **Add ringtone:** Copy MP3 file to `frontend/static/audio/ringtone.mp3`
-3. **Register service worker:** The service worker is automatically registered
+1.  **Create Web Service:**
+    - Connect your GitHub repository.
+    - **Runtime:** Python 3.
+    - **Build Command:** `pip install -r requirements.txt`
+    - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
-### Testing
+2.  **Environment Variables:**
+    Add these in the Render Dashboard:
+    - `DATABASE_URL`: Your PostgreSQL URL (or use SQLite for testing).
+    - `SECRET_KEY`: A random string for security.
+    - `VAPID_PRIVATE_KEY`: Content of your private key (full string).
+    - `VAPID_PUBLIC_KEY`: Content of your public key.
+    - `VAPID_CLAIMS_EMAIL`: `mailto:your@email.com`.
 
-1. **Local testing:**
-   - Open http://localhost:8000 in browser
-   - Register/login
-   - On iPhone: Open in Safari, tap Share → Add to Home Screen
-   - Install the PWA
+3.  **Database:**
+    - The app includes an auto-migration script in `main.py` that runs on startup to ensure the database schema is correct.
 
-2. **Test device ringing:**
-   - Open app on two devices
-   - From device A, ring device B
-   - Select duration
-   - Device B should ring (audio plays and screen shows ringing UI)
-   - Click stop to silence
+## Usage Guide
 
-## Deployment
+### iOS (iPhone/iPad)
+**Important:** Web Push on iOS requires the app to be installed on the Home Screen.
+1.  Open the website in **Safari**.
+2.  Tap the **Share** button (box with arrow).
+3.  Scroll down and tap **"Add to Home Screen"**.
+4.  Open the "Buzzer" app from your home screen.
+5.  Login and click "Enable Notifications".
 
-### Recommended: Render.com
+### Android / Desktop
+1.  Open the website in Chrome/Edge.
+2.  Login and click "Enable Notifications" when prompted.
+3.  (Optional) Click the "Install" icon in the address bar for a native app experience.
 
-1. **Create account:** https://render.com
-2. **Create PostgreSQL database:** Add managed PostgreSQL
-3. **Create Web Service:**
-   - Connect GitHub repo
-   - Set start command: `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000`
-   - Add environment variables:
-     - `DATABASE_URL=postgresql://...` (from PostgreSQL service)
-     - `SECRET_KEY=<generate-random-key>`
-     - `DEBUG=False`
-4. **Generate SECRET_KEY:**
-   ```bash
-   python -c "import secrets; print(secrets.token_urlsafe(32))"
-   ```
-5. **Important:** SSL is automatic on Render.com (required for PWA)
-
-### Manual Deployment
-
-If deploying elsewhere (DigitalOcean, AWS, etc):
-1. Ensure PostgreSQL is running
-2. Set environment variables
-3. Run migrations: `alembic upgrade head`
-4. Start server: `uvicorn app.main:app --host 0.0.0.0 --port 8000`
-5. **IMPORTANT:** Setup SSL certificate (required for PWA to work)
-
-## Architecture
-
-- **Backend:** FastAPI + PostgreSQL + WebSockets
-- **Frontend:** Vanilla JavaScript PWA
-- **Real-time:** WebSocket connections for ring commands and device status
-- **Audio:** HTML5 Audio API (not Web Audio API - required for iOS)
+### Buzzing a Device
+1.  Go to **"My Devices"** to buzz your own registered devices.
+2.  Or create a **Group**, invite friends, and buzz their devices from the Group view.
+3.  **Online Devices:** Will show a full-screen overlay alert.
+4.  **Offline Devices:** Will receive a system notification.
 
 ## Project Structure
 
 ```
 buzzer_app/
-├── backend/                 # FastAPI backend
-│   ├── app/                # Main application
-│   │   ├── api/           # REST endpoints
-│   │   ├── models/        # Database models
-│   │   ├── websocket/     # WebSocket manager
-│   │   └── services/      # Business logic
-│   ├── alembic/           # Database migrations
+├── backend/
+│   ├── app/
+│   │   ├── api/           # API Endpoints
+│   │   ├── models/        # DB Models
+│   │   ├── services/      # Business Logic (Push/Ring)
+│   │   └── main.py        # App Entry Point
+│   ├── alembic/           # Migrations
 │   └── requirements.txt
-├── frontend/              # PWA frontend
-│   ├── index.html        # Login page
-│   ├── dashboard.html    # Main interface
-│   ├── manifest.json     # PWA manifest
-│   ├── service-worker.js # Offline caching
-│   └── static/           # CSS, JS, images, audio
-└── CLAUDE.md            # Development guide
+├── frontend/
+│   ├── static/
+│   │   ├── js/            # Frontend Logic (app.js, notifications.js)
+│   │   └── images/        # Icons
+│   ├── service-worker.js  # Push Handler
+│   ├── manifest.json      # PWA Config
+│   └── dashboard.html
+└── README.md
 ```
-
-## Key Files
-
-- **backend/app/main.py** - FastAPI app and WebSocket endpoint
-- **backend/app/websocket/manager.py** - Real-time device communication
-- **frontend/static/js/audio.js** - iOS audio handling (CRITICAL)
-- **frontend/static/js/websocket.js** - Real-time client communication
-- **frontend/manifest.json** - PWA installation config
-
-## Common Issues
-
-### Audio doesn't play on iOS
-- Make sure `frontend/static/audio/ringtone.mp3` exists
-- Audio must be unlocked by user interaction first
-- App must be open (can be on lock screen)
-- Test on actual device (not simulator)
-
-### WebSocket connection fails
-- Check browser DevTools Console for errors
-- Verify backend is running and accessible
-- Ensure JWT token is valid
-- Check CORS settings if cross-origin
-
-### Device doesn't appear online
-- Verify device registered successfully
-- Check WebSocket connection status (green indicator)
-- Ensure heartbeat is being sent (30 second intervals)
-
-### PWA won't install
-- Must be on HTTPS (SSL certificate required)
-- Check manifest.json is valid (https://web.dev/add-manifest/)
-- Clear browser cache and try again
-- Safari on iOS: Settings → Develop → (Device name) → Clear all websites data
-
-## Environment Variables
-
-```bash
-# Database
-DATABASE_URL=postgresql://user:password@host/dbname
-
-# JWT
-SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
-
-# CORS
-CORS_ORIGINS=["https://yourdomain.com"]
-
-# App
-APP_NAME=Buzzer
-DEBUG=False
-```
-
-## Development Commands
-
-```bash
-# Backend
-cd backend
-uvicorn app.main:app --reload
-
-# Database migrations
-alembic revision --autogenerate -m "Description"
-alembic upgrade head
-alembic downgrade -1
-
-# Tests (when implemented)
-pytest backend/tests -v
-```
-
-## Security Notes
-
-- Always use HTTPS in production (required for PWA)
-- Rotate SECRET_KEY periodically
-- Don't commit .env file
-- Validate all user inputs
-- Rate limit API endpoints in production
-- Use strong passwords for database
-
-## Support
-
-For issues or questions:
-1. Check CLAUDE.md for development guide
-2. Review backend/app/main.py for API structure
-3. Check browser DevTools for client-side errors
-4. Enable DEBUG=True temporarily to see server logs
 
 ## License
-
-This project is open source. Use freely for personal or commercial use.
-
-## Credits
-
-Built with:
-- FastAPI (async Python web framework)
-- SQLAlchemy (Python ORM)
-- PostgreSQL (database)
-- Progressive Web App APIs (offline, installation)
-
----
-
-**Last Updated:** November 2024
-**Status:** Production Ready (icons and ringtone needed)
+Open Source.
