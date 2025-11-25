@@ -61,6 +61,30 @@ class DeviceManager {
         if (ua.includes("iPad")) return "iPad";
         return "Device";
     }
+    async getDevices() {
+        const response = await fetch("/api/devices/", {
+            headers: auth.getAuthHeader()
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch devices");
+        }
+
+        return await response.json();
+    }
+
+    async deleteDevice(deviceId) {
+        const response = await fetch(`/api/devices/${deviceId}`, {
+            method: "DELETE",
+            headers: auth.getAuthHeader()
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to delete device");
+        }
+
+        return true;
+    }
 }
 
 const deviceManager = new DeviceManager();
