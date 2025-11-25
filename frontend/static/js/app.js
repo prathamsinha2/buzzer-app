@@ -164,15 +164,22 @@ class BuzzerApp {
         container.innerHTML = this.devices.map(device => `
             <div class="device-item">
                 <div class="device-info">
-                    <div class="device-name">${device.device_name}</div>
+                    <div class="device-name">
+                        ${device.device_name}
+                        ${device.user_name ? `<span class="device-owner">(${device.user_name})</span>` : ''}
+                    </div>
                     <span class="device-status ${device.is_online ? 'status-online-device' : 'status-offline-device'}">
                         ${device.is_online ? "Online" : "Offline"}
                     </span>
                 </div>
                 <div class="device-actions">
-                    ${device.is_online ?
-                `<button class="btn btn-primary" onclick="app.ringDevice(${device.id}, '${device.device_name}')">Ring</button>` :
-                '<button class="btn btn-secondary" disabled>Offline</button>'}
+                    ${device.user_id === auth.user.id ?
+                '<button class="btn btn-secondary" disabled>You</button>' :
+                (device.is_online ?
+                    `<button class="btn btn-primary" onclick="app.ringDevice(${device.id}, '${device.device_name}')">Ring</button>` :
+                    '<button class="btn btn-secondary" disabled>Offline</button>'
+                )
+            }
                 </div>
             </div>
         `).join("");

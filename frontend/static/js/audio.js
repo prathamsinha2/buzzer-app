@@ -16,6 +16,9 @@ class AudioManager {
         const unlock = () => {
             if (this.unlocked) return;
 
+            // Mute before unlocking
+            this.audio.volume = 0;
+
             // Try to play and immediately pause to "unlock" audio on iOS
             const playPromise = this.audio.play();
             if (playPromise !== undefined) {
@@ -109,8 +112,8 @@ class AudioManager {
     setupVisibilityHandler() {
         document.addEventListener("visibilitychange", () => {
             if (!document.hidden && !this.unlocked) {
-                // Page became visible - try to unlock audio again
-                document.body.click();
+                // Page became visible - we still need user interaction to unlock
+                console.log("Page visible, waiting for interaction to unlock audio");
             }
         });
     }

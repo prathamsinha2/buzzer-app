@@ -285,6 +285,7 @@ body {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -302,9 +303,12 @@ body {
 }
 
 @keyframes bounce {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0);
     }
+
     50% {
         transform: translateY(-20px);
     }
@@ -333,6 +337,7 @@ body {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -457,4 +462,11 @@ body {
     background: #e8f5e9;
     border: 1px solid #66bb6a;
     color: #2e7d32;
+}
+
+.device-owner {
+    font-size: 0.85em;
+    color: #666;
+    font-weight: normal;
+    margin-left: 5px;
 }

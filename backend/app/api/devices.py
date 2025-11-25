@@ -46,9 +46,11 @@ def register_device(
 
     return DeviceResponse(
         id=device.id,
+        user_id=device.user_id,
         device_id=device.device_id,
         device_name=device.device_name,
         device_type=device.device_type,
+        user_name=current_user.full_name,
         is_online=device.is_online,
         last_seen=device.last_seen
     )
@@ -64,9 +66,11 @@ def get_devices(
     return [
         DeviceResponse(
             id=d.id,
+            user_id=d.user_id,
             device_id=d.device_id,
             device_name=d.device_name,
             device_type=d.device_type,
+            user_name=current_user.full_name,
             is_online=d.is_online,
             last_seen=d.last_seen
         )
@@ -92,8 +96,8 @@ def get_group_devices(
             detail="Not a member of this group"
         )
 
-    # Get all devices from group members
-    devices = db.query(Device).join(
+    # Get all devices from group members with user info
+    results = db.query(Device, User.full_name).join(
         User,
         Device.user_id == User.id
     ).join(
@@ -106,13 +110,15 @@ def get_group_devices(
     return [
         DeviceResponse(
             id=d.id,
+            user_id=d.user_id,
             device_id=d.device_id,
             device_name=d.device_name,
             device_type=d.device_type,
+            user_name=full_name,
             is_online=d.is_online,
             last_seen=d.last_seen
         )
-        for d in devices
+        for d, full_name in results
     ]
 
 

@@ -12,9 +12,11 @@ class DeviceRegister(BaseModel):
 class DeviceResponse(BaseModel):
     """Schema for device response."""
     id: int
+    user_id: int
     device_id: str
     device_name: str
     device_type: str | None
+    user_name: str | None = None
     is_online: bool
     last_seen: datetime | None
 
