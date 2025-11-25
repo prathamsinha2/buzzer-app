@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -34,6 +34,5 @@ class GroupMember(Base):
     user = relationship("User", back_populates="group_memberships")
 
     __table_args__ = (
-        # Ensure unique membership per group per user
-        {"indexes": [Column("group_id"), Column("user_id")]}
+        UniqueConstraint('group_id', 'user_id', name='uq_group_user_membership'),
     )

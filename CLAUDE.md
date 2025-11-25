@@ -308,6 +308,104 @@ Error handling, UI improvements, testing, and production deployment.
 - Cache group/device list in localStorage where appropriate
 - Lazy load device lists if groups get large
 
+## Deployment Troubleshooting
+
+### Common Deployment Errors & Fixes
+
+#### Python Version Issue
+**Error**: `error: metadata-generation-failed` when installing dependencies
+
+**Root Cause**: Render defaults to Python 3.13, but some packages don't have pre-built wheels for 3.13
+
+**Fix**: Create `.python-version` file in project root with content:
+```
+3.11
+```
+
+#### Alembic Configuration Error
+**Error**: `FAILED: No 'script_location' key found in configuration`
+
+**Root Cause**: `alembic.ini` missing the `script_location` key
+
+**Fix**: Ensure `backend/alembic.ini` contains:
+```ini
+[alembic]
+sqlalchemy.url = driver://user:pass@localhost/dbname
+script_location = alembic
+```
+
+#### SQLAlchemy TypeError
+**Error**: `TypeError: Additional arguments should be named <dialectname>_<argument>, got 'indexes'`
+
+**Root Cause**: Invalid `__table_args__` syntax in SQLAlchemy models
+
+**Fix**: Use proper SQLAlchemy syntax for constraints:
+```python
+from sqlalchemy import UniqueConstraint
+
+class GroupMember(Base):
+    __tablename__ = "group_members"
+
+    __table_args__ = (
+        UniqueConstraint('group_id', 'user_id', name='uq_group_user_membership'),
+    )
+```
+
+#### Build Succeeded but App Won't Start
+**Symptoms**: Build completes but app exits with error
+
+**Debug Steps**:
+1. Check Render logs for Python error traceback
+2. Verify all imports in `app/main.py` resolve correctly
+3. Ensure environment variables are set (DATABASE_URL, SECRET_KEY)
+4. Test locally: `uvicorn app.main:app` from backend directory
+5. Check for syntax errors in models and schemas
+
+#### Database Migration Errors
+**Error**: `sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateTable)`
+
+**Cause**: Migration trying to create table that already exists
+
+**Fix**:
+1. SSH into Render service (if available)
+2. Check: `psql -d $DATABASE_URL -c "\dt"` to see existing tables
+3. May need to manually drop problematic tables if migrations are out of sync
+4. Re-run: `alembic upgrade head`
+
+### Deployment Process on Render.com
+
+1. **Prerequisites**:
+   - GitHub repository created with all code committed
+   - PostgreSQL database created on Render
+   - Environment variables configured
+
+2. **Initial Setup**:
+   - Click "Create New" → "Web Service"
+   - Connect GitHub repo (buzzer-app)
+   - Configure build command: `pip install -r backend/requirements.txt && cd backend && alembic upgrade head`
+   - Configure start command: `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - Add environment variables:
+     - `DATABASE_URL`: PostgreSQL connection string (from Render PostgreSQL service)
+     - `SECRET_KEY`: `python -c "import secrets; print(secrets.token_urlsafe(32))"`
+     - `DEBUG`: `False`
+
+3. **Monitor Deployment**:
+   - Go to Web Service dashboard
+   - Click "Logs" tab to watch build progress
+   - Look for "Build succeeded" message
+   - Service URL appears at top once live
+
+4. **Post-Deployment**:
+   - Visit service URL in browser
+   - Verify login page loads
+   - Test registration and login flow
+   - Install on iPhone and test ringing feature
+
+### When to Re-deploy
+- After any code commits to GitHub (Render auto-deploys)
+- Manual redeploy: Service dashboard → "Manual Deploy" button
+- Useful for testing environment variable changes without code commit
+
 ## Deployment
 
 **Recommended**: Render.com (free tier available, auto SSL, PostgreSQL included)
