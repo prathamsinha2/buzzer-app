@@ -28,7 +28,7 @@ async def start_ring(
             detail="Device not found"
         )
 
-    # Find a group where both users are members
+    # Find a group where the current user is a member (needed for RingSession)
     group_member = db.query(GroupMember).filter(
         GroupMember.user_id == current_user.id
     ).first()
@@ -39,24 +39,24 @@ async def start_ring(
             detail="You are not in any group"
         )
 
-    # Verify target device owner is also in the group
-    target_owner_membership = db.query(GroupMember).filter(
-        GroupMember.group_id == group_member.group_id,
-        GroupMember.user_id == target_device.user_id
-    ).first()
+    # Check permissions
+    is_own_device = target_device.user_id == current_user.id
+    
+    if not is_own_device:
+        # Verify target device owner is also in the group
+        target_owner_membership = db.query(GroupMember).filter(
+            GroupMember.group_id == group_member.group_id,
+            GroupMember.user_id == target_device.user_id
+        ).first()
 
-    if not target_owner_membership:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Target device owner is not in your group"
-        )
+        if not target_owner_membership:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Target device owner is not in your group"
+            )
 
-    # Can't ring offline devices
-    if not target_device.is_online:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Target device is offline"
-        )
+    # Allow ringing offline devices (for Push Notifications)
+    # if not target_device.is_online: ... (Removed)
 
     try:
         ring_session = await start_ring_session(

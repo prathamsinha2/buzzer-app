@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 from app.database import Base, engine
 from app.config import settings
-from app.api import auth, groups, devices, rings
+from app.api import auth, groups, devices, rings, notifications
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -30,6 +30,7 @@ app.include_router(auth.router)
 app.include_router(groups.router)
 app.include_router(devices.router)
 app.include_router(rings.router)
+app.include_router(notifications.router)
 
 
 @app.get("/health")

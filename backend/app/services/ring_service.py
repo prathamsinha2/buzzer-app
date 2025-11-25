@@ -16,9 +16,14 @@ async def start_ring_session(
     """Start a ring session and send command via WebSocket."""
 
     # Get target device
-    device = db.query(Device).filter(Device.id == target_device_id).first()
-    if not device:
+    target_device = db.query(Device).filter(Device.id == target_device_id).first()
+    if not target_device:
         raise ValueError("Device not found")
+
+    # Get initiator name
+    from app.models.user import User
+    initiator = db.query(User).filter(User.id == initiated_by_user_id).first()
+    initiator_name = initiator.full_name if initiator else "Someone"
 
     # Create ring session
     ring_session = RingSession(
@@ -26,30 +31,48 @@ async def start_ring_session(
         initiated_by=initiated_by_user_id,
         target_device_id=target_device_id,
         duration_seconds=duration_seconds,
-        status="initiated"
+        status="active"
     )
     db.add(ring_session)
     db.commit()
     db.refresh(ring_session)
 
-    # Send ring command via WebSocket
-    message = {
-        "type": "ring_command",
-        "ring_session_id": ring_session.id,
-        "duration": duration_seconds,
-        "initiated_by_user_id": initiated_by_user_id,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    # 1. Send WebSocket message (for in-app UI)
+    await manager.send_to_device(
+        target_device.device_id,
+        {
+            "type": "ring_command",
+            "ring_session_id": ring_session.id,
+            "duration": duration_seconds,
+            "initiator_name": initiator_name
+        }
+    )
 
-    success = await manager.send_to_device(device.device_id, message)
+    # 2. Send Web Push Notification (for background/system)
+    if target_device.push_subscription:
+        try:
+            from pywebpush import webpush, WebPushException
+            import json
+            from app.config import settings
 
-    if success:
-        ring_session.status = "ringing"
-        db.commit()
-    else:
-        ring_session.status = "failed"
-        db.commit()
-        raise ValueError("Failed to send ring command - device may be offline")
+            subscription_info = json.loads(target_device.push_subscription)
+            
+            # Only send if keys are configured
+            if settings.VAPID_PRIVATE_KEY and settings.VAPID_CLAIMS_EMAIL:
+                webpush(
+                    subscription_info=subscription_info,
+                    data=json.dumps({
+                        "title": "BUZZER",
+                        "body": f"{initiator_name} is buzzing you!",
+                        "icon": "/static/images/icon-192.png",
+                        "url": "/dashboard.html"
+                    }),
+                    vapid_private_key=settings.VAPID_PRIVATE_KEY,
+                    vapid_claims={"sub": settings.VAPID_CLAIMS_EMAIL}
+                )
+                print(f"Push notification sent to device {target_device.device_name}")
+        except Exception as e:
+            print(f"Failed to send push notification: {str(e)}")
 
     return ring_session
 
