@@ -14,6 +14,23 @@ from app.api import auth, groups, devices, rings, notifications
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
+# Auto-migrate database (Fix for Render missing column)
+def run_migrations():
+    from sqlalchemy import inspect, text
+    try:
+        inspector = inspect(engine)
+        columns = [c['name'] for c in inspector.get_columns('devices')]
+        if 'push_subscription' not in columns:
+            print("Migrating database: Adding push_subscription column to devices table...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE devices ADD COLUMN push_subscription VARCHAR"))
+                conn.commit()
+            print("Migration successful.")
+    except Exception as e:
+        print(f"Migration warning: {e}")
+
+run_migrations()
+
 app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 
 # CORS middleware
