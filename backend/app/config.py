@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Buzzer"
     DEBUG: bool = False
 
-    # VAPID Keys (Loaded from vapid.json to avoid .env issues)
+    # VAPID Keys (Loaded from environment variables - preferred for production)
     VAPID_PRIVATE_KEY: str = ""
     VAPID_PUBLIC_KEY: str = ""
     VAPID_CLAIMS_EMAIL: str = ""
@@ -28,17 +28,18 @@ class Settings(BaseSettings):
         env_file = "../.env"
         case_sensitive = True
 
-# Load VAPID keys from JSON file
+# Load VAPID keys from JSON file if environment variables not set (for local development)
 import json
 import os
-try:
-    with open(os.path.join(os.path.dirname(__file__), "..", "vapid.json"), "r") as f:
-        vapid_data = json.load(f)
-        os.environ["VAPID_PRIVATE_KEY"] = vapid_data.get("private_key", "")
-        os.environ["VAPID_PUBLIC_KEY"] = vapid_data.get("public_key", "")
-        os.environ["VAPID_CLAIMS_EMAIL"] = vapid_data.get("email", "")
-except Exception as e:
-    print(f"Warning: Could not load vapid.json: {e}")
+if not os.environ.get("VAPID_PUBLIC_KEY"):
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "..", "vapid.json"), "r") as f:
+            vapid_data = json.load(f)
+            os.environ.setdefault("VAPID_PRIVATE_KEY", vapid_data.get("private_key", ""))
+            os.environ.setdefault("VAPID_PUBLIC_KEY", vapid_data.get("public_key", ""))
+            os.environ.setdefault("VAPID_CLAIMS_EMAIL", vapid_data.get("email", ""))
+    except Exception as e:
+        print(f"Warning: Could not load vapid.json: {e}")
 
 
 settings = Settings()
