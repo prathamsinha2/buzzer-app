@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Buzzer">
+    <meta name="theme-color" content="#007AFF">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    <title>Buzzer - Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+    <div id="app" class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <h1>Buzzer</h1>
+            <div class="header-actions">
+                <span id="connection-status" class="connection-status status-offline">Offline</span>
+                <button id="logout-btn" class="btn btn-icon">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Group Selector -->
+            <section class="section">
+                <h2>Your Groups</h2>
+                <div id="groups-container" class="groups-container">
+                    <div class="loading">Loading groups...</div>
+                </div>
+                <button id="create-group-btn" class="btn btn-primary btn-block">+ Create Group</button>
+                <button id="join-group-btn" class="btn btn-secondary btn-block">+ Join Group</button>
+            </section>
+
+            <!-- Devices List -->
+            <section class="section">
+                <h2>Devices in Group</h2>
+                <div id="devices-container" class="devices-container">
+                    <div class="empty-state">Select a group to see devices</div>
+                </div>
+            </section>
+
+            <!-- My Devices -->
+            <section class="section">
+                <h2>My Devices</h2>
+                <div id="my-devices-container" class="devices-container">
+                    <div class="loading">Loading your devices...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Ringing Overlay -->
+    <div id="ringing-overlay" class="ringing-overlay" style="display: none;">
+        <div class="ringing-content">
+            <div class="ringing-icon">📳</div>
+            <h2 id="ringing-message">Someone is ringing you!</h2>
+            <button id="stop-ring-btn" class="btn btn-danger btn-large">Stop</button>
+        </div>
+    </div>
+
+    <!-- Modal for creating group -->
+    <div id="create-group-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Group</h2>
+                <button class="modal-close" onclick="closeModal('create-group-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="group-name">Group Name</label>
+                    <input type="text" id="group-name" placeholder="My Family" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('create-group-modal')">Cancel</button>
+                <button id="create-group-submit" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for joining group -->
+    <div id="join-group-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Join Group</h2>
+                <button class="modal-close" onclick="closeModal('join-group-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="invite-code">Invite Code</label>
+                    <input type="text" id="invite-code" placeholder="Paste the invite code here" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('join-group-modal')">Cancel</button>
+                <button id="join-group-submit" class="btn btn-primary">Join</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for ringing options -->
+    <div id="ring-options-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="ring-device-name">Ring Device</h2>
+                <button class="modal-close" onclick="closeModal('ring-options-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Select how long to ring:</p>
+                <div class="ring-options">
+                    <button class="ring-option-btn" data-duration="30">30 seconds</button>
+                    <button class="ring-option-btn" data-duration="60">1 minute</button>
+                    <button class="ring-option-btn" data-duration="120">2 minutes</button>
+                    <button class="ring-option-btn" data-duration="null">Continuous</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div id="error-toast" class="toast toast-error" style="display: none;"></div>
+
+    <!-- Success Toast -->
+    <div id="success-toast" class="toast toast-success" style="display: none;"></div>
+
+    <script src="/static/js/device.js"></script>
+    <script src="/static/js/websocket.js"></script>
+    <script src="/static/js/audio.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/ui.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
