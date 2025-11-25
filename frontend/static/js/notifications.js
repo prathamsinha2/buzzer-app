@@ -18,7 +18,7 @@ const notificationManager = {
         }
 
         // Check current permission
-        if (Notification.permission === 'granted') {
+        if ('Notification' in window && Notification.permission === 'granted') {
             this.subscribeUser();
         }
 
@@ -32,6 +32,11 @@ const notificationManager = {
 
         if (isIOS && !isStandalone) {
             alert("On iPhone, you must add this app to your Home Screen to enable notifications.\n\nTap Share (box with arrow) -> 'Add to Home Screen'");
+            return false;
+        }
+
+        if (!('Notification' in window)) {
+            alert("This browser does not support desktop notification");
             return false;
         }
 

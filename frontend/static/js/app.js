@@ -55,7 +55,7 @@ class BuzzerApp {
 
             // Initialize Notifications
             const notificationsEnabled = await notificationManager.init();
-            if (!notificationsEnabled && Notification.permission !== 'granted') {
+            if (!notificationsEnabled && 'Notification' in window && Notification.permission !== 'granted') {
                 document.getElementById('notification-permission-area').style.display = 'block';
             }
 
