@@ -106,9 +106,25 @@ function showLoading(show = true) {
 
 // Initialize auth page
 document.addEventListener("DOMContentLoaded", () => {
-    // If already logged in, go to dashboard
+    // If already logged in, show message instead of auto-redirecting (to prevent loops)
     if (auth.isAuthenticated()) {
-        window.location.href = "/dashboard.html";
+        console.log("User is authenticated. Token:", auth.token);
+
+        // Hide forms and show "Already logged in" message
+        document.getElementById("login-form").style.display = "none";
+        document.getElementById("register-form").style.display = "none";
+
+        const container = document.querySelector(".auth-box");
+        const msgDiv = document.createElement("div");
+        msgDiv.className = "auth-form";
+        msgDiv.innerHTML = `
+            <h2>Welcome Back!</h2>
+            <p>You are already logged in.</p>
+            <button class="btn btn-primary" onclick="window.location.href='/dashboard.html'">Go to Dashboard</button>
+            <button class="btn btn-secondary" onclick="auth.logout(); window.location.reload();" style="margin-top: 10px;">Logout</button>
+        `;
+        container.appendChild(msgDiv);
+
         return;
     }
 

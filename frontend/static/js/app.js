@@ -9,6 +9,8 @@ class BuzzerApp {
     async init() {
         // Check authentication
         if (!auth.isAuthenticated()) {
+            console.log("Not authenticated, redirecting to login");
+            auth.logout(); // Ensure token is cleared
             window.location.href = "/";
             return;
         }
@@ -146,8 +148,8 @@ class BuzzerApp {
                 <div class="group-code">Code: ${group.invite_code}</div>
                 <div class="group-member-count">${group.members.length} member(s)</div>
                 ${group.owner_id === auth.user.id ?
-                    '<button class="group-action-btn" onclick="event.stopPropagation(); app.leaveGroup(' + group.id + ')">Leave</button>' :
-                    ''}
+                '<button class="group-action-btn" onclick="event.stopPropagation(); app.leaveGroup(' + group.id + ')">Leave</button>' :
+                ''}
             </div>
         `).join("");
     }
@@ -169,8 +171,8 @@ class BuzzerApp {
                 </div>
                 <div class="device-actions">
                     ${device.is_online ?
-                        `<button class="btn btn-primary" onclick="app.ringDevice(${device.id}, '${device.device_name}')">Ring</button>` :
-                        '<button class="btn btn-secondary" disabled>Offline</button>'}
+                `<button class="btn btn-primary" onclick="app.ringDevice(${device.id}, '${device.device_name}')">Ring</button>` :
+                '<button class="btn btn-secondary" disabled>Offline</button>'}
                 </div>
             </div>
         `).join("");
