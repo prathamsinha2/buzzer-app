@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'add_push_sub'
-down_revision = None
+revision = '002_add_push_subscription'
+down_revision = '001'
 branch_labels = None
 depends_on = None
 
